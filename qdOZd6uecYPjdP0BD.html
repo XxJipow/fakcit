@@ -1,0 +1,1719 @@
+<html><head><base href="https://aiaisponge.bob/">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+    <style>
+      @font-face { 
+        font-family: 'SpongeBoy Font'; 
+        src: url('/Krabby Patty.ttf') format('truetype'); 
+      }
+      body { margin: 0; overflow: hidden; font-family: 'SpongeBoy Font', Arial, sans-serif; }
+      canvas { display: block; }
+      #ui, #credit, #subtitles, #transitionOverlay, #topicDisplay, #stopTopic, #walkingToggle, #watermarkContainer, #bubbleTransition, #uiToggle { position: absolute; }
+    
+      :fullscreen #ui, 
+      :fullscreen #credit,
+      :fullscreen #watermarkContainer {
+        font-size: 12px;
+        padding: 5px;
+      }
+    
+      :fullscreen #ui {
+        top: 5px;
+        left: 5px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+      }
+    
+      :fullscreen #ui button {
+        font-size: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: white;
+        margin: 0 5px;
+      }
+    
+      :fullscreen #ui button .material-symbols-outlined {
+        font-size: 24px;
+      }
+    
+      #fullscreenToggle {
+        position: absolute;
+        top: 10px;
+        right: 60px;
+        cursor: pointer;
+        z-index: 100;
+        background: white;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0;
+      }
+    
+      #fullscreenToggle .material-symbols-outlined {
+        font-size: 24px;
+        line-height: 1;
+      }
+    
+      #submitTopic:disabled {
+        background-color: #555;
+        color: #ccc;
+        cursor: not-allowed;
+      }
+    
+      #rawResponseToggle {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        cursor: pointer;
+        z-index: 100;
+        background: white;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0;
+      }
+    
+      #rawResponseToggle .material-symbols-outlined {
+        font-size: 24px;
+      }
+    
+      #rawResponsePopup {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 80%;
+        height: 80%;
+        background-color: rgba(0, 0, 0, 0.9);
+        padding: 20px;
+        border-radius: 10px;
+        z-index: 1002;
+        display: none;
+        overflow: auto;
+      }
+    
+      #rawResponsePopup pre {
+        color: white;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        font-size: 14px;
+        font-family: Arial, sans-serif;
+        max-height: 90%;
+        overflow-y: auto;
+      }
+
+      #responseControls {
+        margin-bottom: 15px;
+        display: flex;
+        gap: 10px;
+      }
+
+      #responseControls button {
+        background: #444;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      #responseControls button.active {
+        background: #666;
+      }
+
+      #manualResponseInput {
+        background: #222;
+        color: #fff;
+        border: 1px solid #444;
+        border-radius: 4px;
+      }
+
+      #viewResponseContent, #inputResponseContent {
+        margin-bottom: 15px;
+      }
+
+      /* Loading Screen Styles */
+      #loadingScreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        z-index: 2000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+    
+      .loadingContent {
+        text-align: center;
+        color: #fff;
+        font-family: 'SpongeBoy Font', Arial, sans-serif;
+      }
+    
+      .loadingSpinner {
+        border: 8px solid rgba(255, 255, 255, 0.3);
+        border-top: 8px solid #fff;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        animation: spin 1s linear infinite;
+        margin: 20px auto 0;
+      }
+    
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    
+      #rawResponsePopup button {
+        margin-top: 10px;
+        padding: 10px;
+        font-size: 16px;
+        cursor: pointer;
+        font-family: 'SpongeBoy Font', Arial, sans-serif;
+        border-radius: 5px;
+      }
+    
+      #rawResponseOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1001;
+        display: none;
+      }
+    
+      :fullscreen #rawResponseToggle {
+        top: 10px;
+        width: 40px;
+        height: 40px;
+      }
+    
+      :fullscreen #credit {
+        bottom: 5px;
+        left: 5px;
+      }
+    
+      :fullscreen #watermarkContainer {
+        bottom: 5px;
+        right: 5px;
+      }
+    
+      :fullscreen #watermarkContainer .anyaiWatermark {
+        bottom: 20px;
+        right: 5px;  
+      }
+      #ui { 
+        top: 10px; 
+        left: 10px; 
+        z-index: 100;
+        background-color: rgba(0, 0, 0, 0.8);
+        padding: 15px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        backdrop-filter: blur(5px);
+      }
+      button, select, input {
+        padding: 10px;
+        margin: 5px;
+        font-size: 16px;
+        cursor: pointer;
+        font-family: 'SpongeBoy Font', Arial, sans-serif;
+        border-radius: 5px;
+        transition: all 0.2s ease-in-out;
+      }
+      button:hover, select:hover, input:hover {
+        transform: scale(0.95);
+      }
+      #topicInput {
+        background: rgba(255, 255, 255, 0.9);
+        border: none;
+        border-radius: 25px;
+        padding: 12px 20px;
+        font-size: 16px;
+        width: 300px;
+        transition: all 0.3s;
+      }
+      #topicInput:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px #FFA500;
+      }
+      #credit { bottom: 10px; left: 10px; color: rgba(255,255,255,0.5); font-size: 12px; z-index: 100; }
+      #subtitles { 
+        bottom: 70px;
+        left: 50%; 
+        transform: translateX(-50%); 
+        background-color: rgba(0,0,0,0.7); 
+        color: white; 
+        padding: 10px; 
+        border-radius: 5px; 
+        font-size: 24px; 
+        text-align: center; 
+        max-width: 80%; 
+        z-index: 100; 
+        font-family: 'SpongeBoy Font', Arial, sans-serif; 
+        line-height: 1.4;
+      }
+      #transitionOverlay { top: 0; left: 0; width: 100%; height: 100%; background-color: black; display: none; justify-content: center; align-items: center; z-index: 1000; }
+      #transitionOverlay img { max-width: 100%; max-height: 100%; }
+      #topicDisplay { 
+        bottom: 10px;
+        left: 50%; 
+        transform: translateX(-50%);
+        background-color: rgba(0,0,0,0.7); 
+        color: white; 
+        padding: 10px; 
+        border-radius: 5px; 
+        font-size: 18px; 
+        z-index: 100; 
+        font-family: 'SpongeBoy Font', Arial, sans-serif;
+      }
+      #stopTopic { bottom: 10px; right: 10px; background-color: #ff4136; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; display: none; z-index: 100; font-family: 'SpongeBoy Font', Arial, sans-serif; }
+      #walkingToggle { top: 50px; right: 10px; z-index: 100; }
+      #uiToggle { top: 90px; right: 10px; z-index: 100; }
+      #watermarkContainer { 
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 5px;
+        z-index: 100;
+      }
+      #xdgamerWatermark {
+        cursor: pointer;
+        color: white;
+      }
+      #watermark { font-size: 16px; z-index: 100; font-family: Arial, sans-serif; transition: bottom 0.3s ease-in-out; cursor: pointer; }
+      #anyaiWatermark { font-size: 16px; z-index: 100; font-family: Arial, sans-serif; }
+      #watermark span, #anyaiWatermark span { font-weight: bold; }
+      #watermark .pine { color: #FFA500; }
+      #watermark .guy { color: #00FF00; }
+      #anyaiWatermark .any { color: #FF00FF; }
+      #anyaiWatermark .ai { color: #00FFFF; }
+      #bubbleTransition { top: 0; left: 0; width: 100%; height: 100%; display: none; z-index: 1001; }
+      #bubbleTransition img { width: 100%; height: 100%; object-fit: cover; }
+      #settingsPopup {
+        position: absolute;
+        top: 50%;
+        left: 50%; 
+        transform: translate(-50%, -50%);
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 10px;
+        z-index: 1000;
+        display: none;
+      }
+      .settings-page {
+        display: none;
+      }
+
+      .settings-page.active {
+        display: block;
+      }
+
+      .page-buttons {
+        margin-top: 15px;
+        display: flex;
+        gap: 5px;
+      }
+
+      .page-button {
+        background-color: #ccc;
+        border: none;
+        padding: 5px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      .page-button.active {
+        background-color: #fff;
+        color: #000;
+      }
+
+      #closeSettings {
+        margin-right: 10px;
+      }
+      
+      #specialInstructions {
+        font-family: Arial, sans-serif;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        background-color: rgba(255, 255, 255, 0.9);
+        color: black;
+        resize: vertical;
+      }
+      
+      #specialInstructions::placeholder {
+        color: #666;
+      }
+
+      #loadingAssets {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        z-index: 3000;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-family: 'SpongeBoy Font', Arial, sans-serif;
+      }
+
+      #loadingAssets .progress {
+        width: 80%;
+        max-width: 400px;
+        height: 20px;
+        background: #333;
+        border-radius: 10px;
+        margin-top: 20px;
+        overflow: hidden;
+      }
+
+      #loadingAssets .progress-bar {
+        width: 0%;
+        height: 100%;
+        background: linear-gradient(90deg, #FFA500, #00FF00);
+        transition: width 0.3s;
+      }
+    </style>
+    </head>
+    <body>
+    <div id="loadingAssets">
+      <h2>Loading SpongeBob Assets...</h2>
+      <div class="progress">
+        <div class="progress-bar"></div>
+      </div>
+    </div>
+    <div id="ui">
+      <input type="text" id="topicInput" placeholder="Enter a topic">
+      <button id="submitTopic"><span class="material-symbols-outlined">play_arrow</span><span>Submit Topic</span></button>
+      <button id="openSettings"><span class="material-symbols-outlined">settings</span><span>Settings</span></button>
+    </div>
+    <button id="fullscreenToggle"><span class="material-symbols-outlined">fullscreen</span></button>
+    <button id="rawResponseToggle"><span class="material-symbols-outlined">bug_report</span></button>
+    <div id="watermarkContainer">
+      <div id="xdgamerWatermark" onclick="window.open('https://websim.ai/@XDGamer5065', '_blank')">made by <span class="xd">XD</span><span class="gamer">Gamer5065</span></div>
+      <div id="watermark">made by <span class="pine">pine</span><span class="guy">guy</span> 🍍</div>
+      <div id="anyaiWatermark">made with <span class="any">any</span><span class="ai">ai</span></div>
+    </div>
+    <div id="credit">
+    SpongeBob SquarePants © Viacom International Inc. We/the creators do not own the rights to SpongeBob SquarePants. Not affiliated with nickelodeon or Viacom.</div>
+    <div id="subtitles"></div>
+    <div id="topicDisplay"></div>
+    <button id="stopTopic">Stop Conversation</button>
+    <div id="settingsPopup">
+      <div id="settingsPage1" class="settings-page active">
+        <label for="apiSelect">AI Provider:</label>
+        <select id="apiSelect">
+          <option value="llmplayground">LLM Playground</option>
+          <option value="websim">Websim</option>
+        </select>
+
+        <label for="musicSelect">Background Music:</label>
+        <select id="musicSelect">
+          <option value="/SpongeBob SquarePants - Tomfoolery.mp3">Tomfoolery</option>
+          <option value="/Spongebob SquarePants - Ending.mp3">Ending Theme</option>
+          <option value="/SpongeBob SquarePants - Seaweed.mp3">Seaweed</option>
+          <option value="/SpongeBob SquarePants - Twelfth Street Rag.mp3">Twelfth Street Rag</option>
+          <option value="/SpongeBob SquarePants - Gator.mp3">Gator</option>
+          <option value="/SpongeBob SquarePants - Molakai Nuia .mp3">Molakai Nuia</option>
+          <option value="/SpongeBob SquarePants - The Rakehornpipe.mp3">The Rakehornpipe</option>
+          <option value="/SpongeBob SquarePants -  What Shall We Do With the Drunken Sailor.mp3">Drunken Sailor</option>
+          <option value="/SpongeBob SquarePants - Youre Nice.mp3">You're Nice</option>
+        </select>
+        
+        <label for="musicVolumeSlider">Background Music Volume:</label>
+        <input type="range" id="musicVolumeSlider" min="0" max="1" step="0.1" value="0.1">
+        <span id="musicVolumeValue">0.1</span>
+
+        <div id="modelSelectWrapper">
+          <label for="modelSelect">Model:</label>
+          <select id="modelSelect"><option value="">Select AI Model</option></select>
+        </div>
+
+        <label for="languageInput">Language:</label>
+        <input type="text" id="languageInput" placeholder="Enter language (default: English)">
+        
+        <label for="walkingCheckbox">Enable Walking: (beta - advised not to enable)</label>
+        <input type="checkbox" id="walkingCheckbox">
+
+        <label for="uiCheckbox">Hide UI during conversation:</label>
+        <input type="checkbox" id="uiCheckbox">
+        
+        <label for="temperatureSlider">AI Temperature (0.2 - 1.2):</label>
+        <input type="range" id="temperatureSlider" min="0.2" max="1.2" step="0.1" value="0.7">
+        <span id="temperatureValue">0.7</span>
+
+        <label for="maxTokensSlider">Max Tokens (1024 - 4000):</label>
+        <input type="range" id="maxTokensSlider" min="1024" max="4000" step="256" value="3040">
+        <span id="maxTokensValue">3040</span>
+
+        <label for="streamingCheckbox">Streaming Mode:</label>
+        <input type="checkbox" id="streamingCheckbox">
+
+        <label for="familyFriendlyCheckbox">Family Friendly Mode:</label>
+        <input type="checkbox" id="familyFriendlyCheckbox" checked>
+
+        <label for="longConversationCheckbox">Long Conversation Mode:</label>
+        <input type="checkbox" id="longConversationCheckbox" checked>
+      </div>
+
+      <div id="settingsPage2" class="settings-page">
+        <label for="specialInstructions">Special AI Instructions:</label>
+        <textarea id="specialInstructions" placeholder="Enter special instructions for the AI (optional)" style="width: 100%; height: 300px;"></textarea>
+      </div>
+
+      <div class="page-buttons">
+        <button id="closeSettings">Close</button>
+        <button class="page-button active" data-page="1">1</button>
+        <button class="page-button" data-page="2">2</button>
+      </div>
+    </div>
+    <div id="transitionOverlay"><img src="https://j.gifs.com/KOG3Jz@large.gif?download=false" alt="A few moments later"></div>
+    <div id="bubbleTransition"><img src="/bubbles sound.gif" alt="Bubble transition"></div>
+    <div id="settingsOverlay"></div>
+    <div id="rawResponsePopup">
+      <div id="responseControls">
+        <button id="viewResponse" class="active">View Response</button>
+        <button id="inputResponse">Input Response</button>
+      </div>
+      <div id="viewResponseContent">
+        <pre id="rawResponseContent"></pre>
+      </div>
+      <div id="inputResponseContent" style="display: none;">
+        <textarea id="manualResponseInput" placeholder="Enter raw AI response here..." style="width: 100%; height: 300px; margin-bottom: 10px; font-family: monospace; padding: 10px;"></textarea>
+        <button id="submitManualResponse">Process Response</button>
+      </div>
+      <button id="closeRawResponse">Close</button>
+    </div>
+    <div id="rawResponseOverlay"></div>
+    <div id="loadingScreen" style="display: none;">
+      <div class="loadingContent">
+        <p>Generating new conversation...</p>
+        <div class="loadingSpinner"></div>
+      </div>
+    </div>
+    <audio id="transitionAudio" src="/a-few-moments-later-hd.mp3"></audio>
+    <audio id="backgroundMusic" src="/SpongeBob SquarePants - Tomfoolery.mp3" loop=""></audio>
+    <audio id="garyMeow" src="/gary-meow-v2-made-with-Voicemod.mp3"></audio>
+    <audio id="bubbleSound" src="/spongebob-bubble-transition-sound-effect-made-with-Voicemod.mp3"></audio>
+    <script>
+    let assetsToLoad = 13; // Total number of assets (models + audio files)
+    let assetsLoaded = 0;
+
+    function updateLoadingProgress() {
+      assetsLoaded++;
+      const progress = (assetsLoaded / assetsToLoad) * 100;
+      document.querySelector('#loadingAssets .progress-bar').style.width = `${progress}%`;
+      
+      if (assetsLoaded === assetsToLoad) {
+        setTimeout(() => {
+          document.getElementById('loadingAssets').style.display = 'none';
+        }, 500);
+      }
+    }
+
+    const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000), renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+    
+    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    directionalLight.position.set(1, 1, 1);
+    scene.add(directionalLight);
+    
+    const pointLight = new THREE.PointLight(0xffffff, 0.5);
+    pointLight.position.set(0, 2, 0);
+    scene.add(pointLight);
+    
+    new THREE.TextureLoader().load('/skybox.png', (skyboxTexture) => {
+      const rt = new THREE.WebGLCubeRenderTarget(skyboxTexture.image.height);
+      rt.fromEquirectangularTexture(renderer, skyboxTexture);
+      scene.background = rt.texture;
+    });
+    
+    const gltfLoader = new THREE.GLTFLoader();
+    let dioramaModel, spongeBobModel, patrickModel, garyModel, mrKrabsModel, squidwardModel, planktonModel, sandyModel, larryModel;
+    let characters = JSON.parse(localStorage.getItem('customCharacters')) || [];
+    
+    function loadModel(url, callback) {
+      gltfLoader.load(url, 
+        (gltf) => {
+          callback(gltf.scene);
+          updateLoadingProgress();
+        }, 
+        undefined, 
+        console.error
+      );
+    }
+    
+    loadModel('/sm_diroama.glb', (model) => {
+      dioramaModel = model;
+      scene.add(dioramaModel);
+      const box = new THREE.Box3().setFromObject(dioramaModel);
+      const center = box.getCenter(new THREE.Vector3());
+      dioramaModel.position.sub(center);
+      loadModel('/spongebob_squarepants.glb', loadSpongeBob);
+    });
+    
+    function loadSpongeBob(model) {
+      spongeBobModel = model;
+      scene.add(spongeBobModel);
+      spongeBobModel.scale.set(0.3, 0.3, 0.3);
+      const dioramaBox = new THREE.Box3().setFromObject(dioramaModel);
+      const spongeBobBox = new THREE.Box3().setFromObject(spongeBobModel);
+      const dioramaSize = dioramaBox.getSize(new THREE.Vector3());
+      const spongeBobSize = spongeBobBox.getSize(new THREE.Vector3());
+      spongeBobModel.position.set(0, dioramaBox.min.y + spongeBobSize.y / 2 + 0.03, dioramaSize.z / 4);
+      spongeBobModel.rotation.y = -Math.PI / 2;
+      spongeBobModel.originalPosition = spongeBobModel.position.clone();
+      spongeBobModel.originalRotation = spongeBobModel.rotation.y;
+      loadModel('/patrick.glb', loadPatrick);
+    }
+    
+    function loadPatrick(model) {
+      patrickModel = model;
+      scene.add(patrickModel);
+      patrickModel.scale.set(0.2, 0.2, 0.2);
+      patrickModel.position.copy(spongeBobModel.position).add(new THREE.Vector3(-0.8, 0, 0));
+      patrickModel.rotation.y = Math.PI / 2;
+      patrickModel.originalPosition = patrickModel.position.clone();
+      patrickModel.originalRotation = patrickModel.rotation.y;
+      loadModel('/gary_the_snail.glb', loadGary);
+    }
+    
+    function loadGary(model) {
+      garyModel = model;
+      scene.add(garyModel);
+      garyModel.scale.set(0.05, 0.05, 0.05);
+      garyModel.position.copy(spongeBobModel.position).add(new THREE.Vector3(0.15, 0, -0.3));
+      garyModel.rotation.y = Math.PI * 2;
+      garyModel.visible = false;
+      garyModel.originalPosition = garyModel.position.clone();
+      garyModel.originalRotation = garyModel.rotation.y;
+      loadModel('/spongebob_squarepants_mr_krabs.glb', loadMrKrabs);
+    }
+    
+    function loadMrKrabs(model) {
+      mrKrabsModel = model;
+      scene.add(mrKrabsModel);
+      mrKrabsModel.scale.set(0.10, 0.10, 0.10);
+      mrKrabsModel.position.copy(spongeBobModel.position).add(new THREE.Vector3(-0.4, 0, -0.4));
+      mrKrabsModel.rotation.y = 0;
+      mrKrabsModel.visible = false;
+      mrKrabsModel.originalPosition = mrKrabsModel.position.clone();
+      mrKrabsModel.originalRotation = mrKrabsModel.rotation.y;
+      loadModel('/spongebob_squarepants_squidward.glb', loadSquidward);
+    }
+    
+    function loadSquidward(model) {
+      squidwardModel = model;
+      scene.add(squidwardModel);
+      squidwardModel.scale.set(0.15, 0.15, 0.15);
+      squidwardModel.position.copy(spongeBobModel.position).add(new THREE.Vector3(0.4, 0, -0.4));
+      squidwardModel.rotation.y = -Math.PI / 4;
+      squidwardModel.visible = false;
+      squidwardModel.originalPosition = squidwardModel.position.clone();
+      squidwardModel.originalRotation = squidwardModel.rotation.y;
+      loadModel('/plankton_spongebob (1).glb', loadPlankton);
+    }
+    
+    function loadPlankton(model) {
+      planktonModel = model;
+      scene.add(planktonModel);
+      planktonModel.scale.set(0.0005, 0.0005, 0.0005);
+      planktonModel.position.copy(patrickModel.position).add(new THREE.Vector3(-0.2, 0, 0.2));
+      planktonModel.rotation.y = Math.PI / 4;
+      planktonModel.visible = false;
+      planktonModel.originalPosition = planktonModel.position.clone();
+      planktonModel.originalRotation = planktonModel.rotation.y;
+      loadModel('/bfbbr_sandy.glb', loadSandy);
+    }
+    
+    function loadSandy(model) {
+      sandyModel = model;
+      scene.add(sandyModel);
+      sandyModel.scale.set(0.2, 0.2, 0.2);
+      sandyModel.position.copy(spongeBobModel.position).add(new THREE.Vector3(0.6, 0, 0.4));
+      sandyModel.rotation.y = -Math.PI / 3;
+      sandyModel.visible = false;
+      sandyModel.originalPosition = sandyModel.position.clone();
+      sandyModel.originalRotation = sandyModel.rotation.y;
+      loadModel('/larry_the_lobster.glb', loadLarry);
+    }
+
+    function loadLarry(model) {
+      larryModel = model;
+      scene.add(larryModel);
+      larryModel.scale.set(0.03, 0.03, 0.03);
+      larryModel.position.copy(spongeBobModel.position).add(new THREE.Vector3(0.8, 0, 0.2));
+      larryModel.rotation.y = -Math.PI / 4;
+      larryModel.visible = false;
+      larryModel.originalPosition = larryModel.position.clone();
+      larryModel.originalRotation = larryModel.rotation.y;
+      loadCustomCharacters();
+      setupCamera();
+    }
+    
+    function loadCustomCharacters() {
+      characters.forEach((charData, index) => {
+        loadModel(charData.modelPath, (model) => {
+          charData.model = model;
+          scene.add(model);
+          model.scale.set(0.2, 0.2, 0.2);
+          model.position.set(charData.x, charData.y, charData.z);
+          model.visible = false;
+          model.originalPosition = model.position.clone();
+          model.originalRotation = model.rotation.y;
+        });
+      });
+    }
+    
+    function setupCamera() {
+      const midpoint = new THREE.Vector3().addVectors(spongeBobModel.position, patrickModel.position).multiplyScalar(0.5);
+      const offset = new THREE.Vector3(-0.7, 0.3, 1);
+      camera.position.copy(midpoint).add(offset);
+      camera.lookAt(midpoint);
+    }
+    
+    function focusOnCharacter(character, duration = 1000) {
+      const midpoint = new THREE.Vector3().addVectors(spongeBobModel.position, patrickModel.position).multiplyScalar(0.5);
+      let targetPosition, targetLookAt;
+    
+      characters.forEach(char => {
+        if (char.model === character) {
+          targetPosition = character.position.clone().add(new THREE.Vector3(0, 0.3, 1));
+          targetLookAt = char.model.position.clone();
+        }
+      });
+    
+      if (character === spongeBobModel) {
+        targetPosition = midpoint.clone().add(new THREE.Vector3(-0.7, 0.3, 1));
+        targetLookAt = spongeBobModel.position.clone();
+      } else if (character === patrickModel) {
+        targetPosition = midpoint.clone().add(new THREE.Vector3(0.7, 0.3, 1));
+        targetLookAt = patrickModel.position.clone();
+      } else if (character === garyModel) {
+        targetPosition = midpoint.clone().add(new THREE.Vector3(-0.5, 0.2, 0.8));
+        targetLookAt = garyModel.position.clone();
+      } else if (character === mrKrabsModel) {
+        targetPosition = midpoint.clone().add(new THREE.Vector3(0, 0.5, 1));
+        targetLookAt = mrKrabsModel.position.clone();
+      } else if (character === squidwardModel) {
+        targetPosition = midpoint.clone().add(new THREE.Vector3(0.5, 0.4, 1));
+        targetLookAt = squidwardModel.position.clone();
+      } else if (character === planktonModel) {
+        targetPosition = midpoint.clone().add(new THREE.Vector3(-0.3, 0.1, 0.7));
+        targetLookAt = planktonModel.position.clone();
+      } else if (character === sandyModel) {
+        targetPosition = midpoint.clone().add(new THREE.Vector3(0.6, 0.4, 1));
+        targetLookAt = sandyModel.position.clone();
+      } else if (character === larryModel) {
+        targetPosition = midpoint.clone().add(new THREE.Vector3(0.8, 0.2, 1));
+        targetLookAt = larryModel.position.clone();
+      }
+    
+      new TWEEN.Tween(camera.position).to(targetPosition, duration).easing(TWEEN.Easing.Quadratic.InOut).start();
+      new TWEEN.Tween(camera).to({ lookAt: targetLookAt }, duration).easing(TWEEN.Easing.Quadratic.InOut).onUpdate(() => camera.lookAt(targetLookAt)).start();
+    }
+    
+    let isSpeaking = false;
+    let apiUrl = 'https://api.llmplayground.net/v1';
+    let streamingMode = false;
+    let streamingTimeout;
+    let rawAIResponse = '';
+    let userPrompt = '';
+    
+    document.getElementById('apiSelect').addEventListener('change', (event) => {
+      if (event.target.value === 'websim') {
+        apiUrl = '/api/ai-sponge-script';
+        document.getElementById('modelSelect').disabled = false;
+      } else {
+        apiUrl = 'https://api.llmplayground.net/v1';
+        document.getElementById('modelSelect').disabled = false;
+      }
+    });
+    
+    function updateCharacterList() {
+      const characterListItems = document.getElementById('characterListItems');
+      characterListItems.innerHTML = ''; // Clear existing list
+    
+      characters.forEach((char, index) => {
+        const li = document.createElement('li');
+        li.textContent = char.name;
+    
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = 'Remove';
+        removeBtn.style.marginLeft = '10px';
+        removeBtn.addEventListener('click', () => {
+          // Remove character from the scene
+          scene.remove(char.model);
+          // Remove character from the characters array
+          characters.splice(index, 1);
+          // Update local storage
+          localStorage.setItem('customCharacters', JSON.stringify(characters.map(c => ({
+            name: c.name,
+            personality: c.personality,
+            modelPath: c.modelPath,
+            x: c.x,
+            y: c.y,
+            z: c.z
+          }))));
+          // Update the character list display
+          updateCharacterList();
+        });
+    
+        li.appendChild(removeBtn);
+        characterListItems.appendChild(li);
+      });
+    }
+    
+    function updateUIForStreamingMode() {
+      if (streamingMode) {
+        // Hide UI elements
+        document.getElementById('ui').style.display = 'none';
+        document.getElementById('rawResponseToggle').style.display = 'none';
+        // Show necessary elements
+        document.getElementById('fullscreenToggle').style.display = 'flex';
+        document.getElementById('stopTopic').style.display = 'block';
+      } else {
+        // Show UI elements
+        document.getElementById('ui').style.display = 'block';
+        document.getElementById('rawResponseToggle').style.display = 'block';
+        // Ensure necessary elements are visible
+        document.getElementById('fullscreenToggle').style.display = 'flex';
+        document.getElementById('stopTopic').style.display = isSpeaking ? 'block' : 'none';
+      }
+    }
+    
+    document.getElementById('streamingCheckbox').addEventListener('change', (event) => {
+      if (event.target.checked) {
+        if (confirm("Are you sure you want to turn on streaming mode?")) {
+          streamingMode = true;
+          generateRandomTopic();
+        } else {
+          event.target.checked = false;
+        }
+      } else {
+        streamingMode = false;
+        clearTimeout(streamingTimeout);
+      }
+      // Update UI based on the new streamingMode value
+      updateUIForStreamingMode();
+    });
+    
+    updateUIForStreamingMode();
+    
+    function generateRandomTopic() {
+      if (streamingMode) {
+        document.getElementById('loadingScreen').style.display = 'flex';
+      }
+      
+      const topics = [
+        "the best jellyfish catching techniques",
+        "the Krusty Krab's secret formula",
+        "Sandy's latest invention",
+        "Squidward's artistic talents",
+        "the mysteries of Rock Bottom",
+        "Gary's favorite snacks",
+        "Plankton's latest scheme",
+        "an underwater treasure hunt",
+        "the annual Bikini Bottom dance-off",
+        "a surprise party for Mr. Krabs",
+        "discovering a new species of jellyfish",
+        "Patrick's new hobby",
+        "SpongeBob's karate lessons with Sandy",
+        "building a sandcastle city",
+        "an adventure to find Mermaid Man and Barnacle Boy",
+        "the legends of the Flying Dutchman",
+        "a time-traveling mishap",
+        "an alien invasion in Bikini Bottom",
+        "attending a concert by Squidward",
+        "Plankton's new restaurant opening",
+        "a mysterious map leading to Atlantis",
+        "participating in the Fry Cook Games",
+        "a snow day under the sea",
+        "competing in a talent show",
+        "a quest to find the magic conch shell",
+        "an unexpected visit from King Neptune",
+        "exploring a haunted shipwreck",
+        "a cooking competition at the Krusty Krab",
+        "an underwater fashion show",
+        "Patrick becomes a genius overnight",
+        "Krabby Patty's secret ingredient",
+        "the great snail race",
+        "a bubble-blowing contest",
+        "SpongeBob's driving test adventures",
+        "the Bikini Bottom Olympics",
+        "a treasure map found in a bottle",
+        "Plankton turning everyone into chum",
+        "Squidward's clarinet recital",
+        "a mysterious new neighbor",
+        "Gary running away from home",
+        "the magic pencil that brings drawings to life",
+        "discovering a portal to another dimension",
+        "an unexpected snowstorm in Bikini Bottom",
+        "a giant sea monster attacking the town",
+        "a prank war between SpongeBob and Patrick",
+        "time traveling to prehistoric Bikini Bottom",
+        "a superhero convention under the sea",
+        "Sandy's science fair experiment gone wrong",
+        "a treasure hunt for the lost city of Atlantis",
+        "a dance competition at the Krusty Krab",
+        "the secrets of jellyfish fields",
+        "the biggest bubble ever blown",
+        "the lost episode of Mermaid Man",
+        "Plankton's giant robotic suit",
+        "a day without Krabby Patties",
+        "SpongeBob forgetting how to tie his shoes",
+        "Patrick's rock turning into a mansion",
+        "an underwater music festival",
+        "the invention of a new sport",
+        "a quest to find the oldest living bubble",
+        "a visit to the surface world",
+        "the discovery of a magic spatula",
+        "an art competition judged by Squidward",
+        "a neighborhood block party",
+        "a mysterious eclipse over Bikini Bottom",
+      ];
+      
+      const charactersArray = ["SpongeBob", "Patrick", "Gary", "Mr. Krabs", "Squidward", "Sandy", "Plankton", "Larry"];
+      characters.forEach(c => charactersArray.push(c.name));
+    
+      const randomTopic = topics[Math.floor(Math.random() * topics.length)];
+      const randomCharacters = [...new Set([...charactersArray.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 4) + 2)])];
+    
+      const topicInput = document.getElementById('topicInput');
+      topicInput.value = `${randomCharacters.join(", ")} discussing ${randomTopic}`;
+      
+      document.getElementById('submitTopic').click();
+    }
+    
+    const submitTopicButton = document.getElementById('submitTopic');
+    const topicInputField = document.getElementById('topicInput');
+    
+    function toggleSubmitButton() {
+      if(topicInputField.value.trim() === '' || isSpeaking) {
+        submitTopicButton.disabled = true;
+      } else {
+        submitTopicButton.disabled = false;
+      }
+    }
+    
+    topicInputField.addEventListener('input', toggleSubmitButton);
+    toggleSubmitButton();
+    
+    submitTopicButton.addEventListener('click', () => {
+      const topic = document.getElementById('topicInput').value;
+      const model = document.getElementById('modelSelect').value || 'gpt-4o';
+      const language = document.getElementById('languageInput').value || 'English';
+      let specialInstructions = document.getElementById('specialInstructions').value.trim();
+      if (!topic) { alert('Please enter a topic.'); return; }
+    
+      submitTopicButton.disabled = true;
+    
+      document.getElementById('topicDisplay').textContent = `Topic: ${topic}`;
+    
+      const isGangIncluded = topic.toLowerCase().includes('the gang') || topic.toLowerCase().includes('everyone');
+      const isGaryVisible = isGangIncluded || topic.toLowerCase().includes('gary');
+      const isMrKrabsVisible = isGangIncluded || topic.toLowerCase().includes('krabs');
+      const isSquidwardVisible = isGangIncluded || topic.toLowerCase().includes('squidward');
+      const isPlanktonVisible = isGangIncluded || topic.toLowerCase().includes('plankton');
+      const isSandyVisible = isGangIncluded || topic.toLowerCase().includes('sandy');
+      const isLarryVisible = isGangIncluded || topic.toLowerCase().includes('larry');
+      
+      if (garyModel) garyModel.visible = isGaryVisible;
+      if (mrKrabsModel) mrKrabsModel.visible = isMrKrabsVisible;
+      if (squidwardModel) squidwardModel.visible = isSquidwardVisible;
+      if (planktonModel) planktonModel.visible = isPlanktonVisible;
+      if (sandyModel) sandyModel.visible = isSandyVisible;
+      if (larryModel) larryModel.visible = isLarryVisible;
+    
+      let characterNames = ['SpongeBob', 'Patrick'];
+    
+      if (isGaryVisible) characterNames.push('Gary');
+      if (isMrKrabsVisible) characterNames.push('Mr. Krabs');
+      if (isSquidwardVisible) characterNames.push('Squidward');
+      if (isPlanktonVisible) characterNames.push('Plankton');
+      if (isSandyVisible) characterNames.push('Sandy');
+      if (isLarryVisible) characterNames.push('Larry');
+    
+      let systemPrompt = `You are ${characterNames.join(', ')}, talking about "${topic}". `;
+    
+      if (characters.length > 0) {
+        systemPrompt += `${characters.map(c => `${c.name} is ${c.personality}. `).join('')}`;
+      }
+    
+      const familyFriendlyMode = document.getElementById('familyFriendlyCheckbox').checked;
+      if (familyFriendlyMode) {
+        systemPrompt += `Keep content family-friendly.`;
+      } else {
+        systemPrompt += `Family friendly mode disabled - swearing and mature themes allowed AND encouraged alot.`;
+      }
+    
+      if (specialInstructions) {
+        systemPrompt += `Special instructions: "${specialInstructions}"`;
+      }
+    
+      systemPrompt += `Format: each character speaks once, starting lines with ${characterNames.map(name => `"${name}:"`).join(', ')}.`;
+    
+      if (isGaryVisible) {
+        systemPrompt += `Gary speaks in "Meow" sounds.`;
+      }
+    
+      const longConversationMode = document.getElementById('longConversationCheckbox').checked;
+      if (longConversationMode) {
+        systemPrompt += `Create a LONG CONVERSATION with multiple exchanges.`;
+      }
+    
+      systemPrompt += `Use the language "${language}" for all dialog expect brackets. You can use transitions/change songs in brackets: "(A few moments later)" or "(Bubble transition)". Switch background music by putting "(Music: songname)" where songname is. Music can be: Tomfoolery, Ending Theme, Seaweed, Street Rag, Gator, Molakai Nuia, The Rakehornpipe, Drunken Sailor, or You're Nice. Do not put anything else in the parentheses. Do not put dialog in parentheses lines: "Patrick: Ah, come on, SpongeBob! You don't understand! This game is LIFE-CHANGING! (Music: Seaweed)" is not appropriate, the brackets must ALWAYS be in a separate line and ALWAYS circle).`;
+      
+      characters.forEach(char => {
+        char.model.visible = true;
+      });
+    
+      document.getElementById('loadingScreen').style.display = 'flex';
+      
+      fetch('https://api.llmplayground.net/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: `Start a conversation about ${topic}` }
+          ],
+          max_tokens: parseInt(document.getElementById('maxTokensSlider').value),
+          temperature: parseFloat(document.getElementById('temperatureSlider').value),
+        }),
+      })
+      .then(response => response.json())
+      .then(data => {
+        rawAIResponse = data.choices[0].message.content;
+        const conversation = data.choices[0].message.content;
+        userPrompt = systemPrompt;
+        displayConversation(conversation);
+        
+        document.getElementById('loadingScreen').style.display = 'none';
+        
+        submitTopicButton.disabled = false;
+      })
+      .catch(error => console.error('Error:', error));
+    });
+    
+    function displayConversation(conversation) {
+      const lines = conversation.split('\n');
+      processLines(lines);
+    }
+    
+    function processLines(lines) {
+      document.getElementById('loadingScreen').style.display = 'none';
+      
+      let currentIndex = 0;
+      isSpeaking = true;
+      submitTopicButton.disabled = true;
+      document.getElementById('stopTopic').style.display = 'block';
+      document.getElementById('watermark').style.bottom = '90px';
+      document.getElementById('anyaiWatermark').style.bottom = '50px';
+    
+      if (document.getElementById('uiCheckbox').checked) {
+        hideUI();
+      }
+    
+      function displayNextLine() {
+        if (currentIndex < lines.length && isSpeaking) {
+          let line = lines[currentIndex].trim();
+          if (line) {
+            const subtitles = document.getElementById('subtitles');
+
+            const transitionMatch = line.match(/\((.*?)\)/);
+            if (transitionMatch) {
+              const transitionText = transitionMatch[1].toLowerCase();
+              
+              if (transitionText.includes('few moments later')) {
+                showTransition('fewMomentsLater');
+                currentIndex++;
+                setTimeout(displayNextLine, 3000);
+                return;
+              }
+              
+              if (transitionText.includes('bubble transition')) {
+                showTransition('bubble');
+                currentIndex++;
+                setTimeout(displayNextLine, 2000);
+                return;
+              }
+
+              if (transitionText.includes('music:')) {
+                const songName = transitionText.split('music:')[1].trim().toLowerCase(); 
+                const songMap = {
+                  'tomfoolery': '/SpongeBob SquarePants - Tomfoolery.mp3',
+                  'ending theme': '/Spongebob SquarePants - Ending.mp3',
+                  'seaweed': '/SpongeBob SquarePants - Seaweed.mp3',
+                  'street rag': '/SpongeBob SquarePants - Twelfth Street Rag.mp3',
+                  'gator': '/SpongeBob SquarePants - Gator.mp3',
+                  'molakai': '/SpongeBob SquarePants - Molakai Nuia .mp3',
+                  'rakehornpipe': '/SpongeBob SquarePants - The Rakehornpipe.mp3',
+                  'drunken sailor': '/SpongeBob SquarePants -  What Shall We Do With the Drunken Sailor.mp3',
+                  'nice': '/SpongeBob SquarePants - Youre Nice.mp3'
+                };
+
+                if (songMap[songName]) {
+                  const currentVolume = backgroundMusic.volume;
+                  backgroundMusic.src = songMap[songName];
+                  backgroundMusic.load();
+                  backgroundMusic.volume = currentVolume;
+                  backgroundMusic.play().catch(e => console.log("Music change failed:", e));
+                }
+                
+                currentIndex++;
+                displayNextLine();
+                return;
+              }
+            }
+
+            subtitles.textContent = line;
+    
+            const characterMatch = line.match(/^(\w+\s?\w*?):/);
+            let model, voice, pitch, rate;
+    
+            if (characterMatch) {
+              const character = characterMatch[1].toLowerCase();
+              characters.forEach(char => {
+                if (char.name.toLowerCase() === character) {
+                  model = char.model;
+                }
+              });
+    
+              const customCharacter = characters.find(c => c.name.toLowerCase() === character);
+              if (customCharacter) {
+                model = customCharacter.model;
+                voice = 'en-US-Wavenet-D'; // Default voice for custom characters
+                pitch = 1.0;
+                rate = 1.0;
+              } else {
+                switch (character) {
+                  case 'spongebob':
+                    model = spongeBobModel;
+                    voice = 'en-US-Wavenet-B';
+                    pitch = 1.2;
+                    rate = 1.2;
+                    break;
+                  case 'patrick':
+                    model = patrickModel;
+                    voice = 'en-US-Wavenet-D';
+                    pitch = 0.9;
+                    rate = 0.9;
+                    break;
+                  case 'gary':
+                    model = garyModel;
+                    break;
+                  case 'mr. krabs':
+                    model = mrKrabsModel;
+                    voice = 'en-US-Wavenet-C';
+                    pitch = 0.8;
+                    rate = 1.1;
+                    break;
+                  case 'squidward':
+                    model = squidwardModel;
+                    voice = 'en-US-Wavenet-A';
+                    pitch = 1.0;
+                    rate = 0.9;
+                    break;
+                  case 'plankton':
+                    model = planktonModel;
+                    voice = 'en-US-Wavenet-E';
+                    pitch = 1.3;
+                    rate = 1.1;
+                    break;
+                  case 'sandy':
+                    model = sandyModel;
+                    voice = 'en-US-Wavenet-F';
+                    pitch = 1.1;
+                    rate = 1.0;
+                    break;
+                  case 'larry':
+                    model = larryModel;
+                    voice = 'en-US-Wavenet-B';
+                    pitch = 0.7;
+                    rate = 1.1;
+                    break;
+                }
+              }
+    
+              if (model) {
+                focusOnCharacter(model);
+                if (character === 'gary') {
+                  playGaryMeow(line.substring(line.indexOf(':') + 1).trim(), () => setTimeout(displayNextLine, 1000));
+                } else {
+                  speakLine(line.substring(line.indexOf(':') + 1).trim(), voice, pitch, rate, () => setTimeout(displayNextLine, 1000));
+                }
+              } else {
+                setTimeout(displayNextLine, 2000);
+              }
+            } else {
+              setTimeout(displayNextLine, 2000);
+            }
+    
+            currentIndex++;
+          } else {
+            currentIndex++;
+            displayNextLine();
+          }
+        } else {
+          document.getElementById('subtitles').textContent = '';
+          document.getElementById('stopTopic').style.display = 'none';
+          document.getElementById('watermark').style.bottom = '30px';
+          document.getElementById('anyaiWatermark').style.bottom = '10px';
+          isSpeaking = false;
+          toggleSubmitButton();
+          showUI();
+          if (streamingMode) {
+            streamingTimeout = setTimeout(generateRandomTopic, 1000);
+          }
+        }
+      }
+    
+      displayNextLine();
+    }
+    
+    function speakLine(text, voiceName, pitch, rate, callback) {
+      if (!isSpeaking) { callback(); return; }
+    
+      function speak() {
+        const utterance = new SpeechSynthesisUtterance(text);
+        const voices = speechSynthesis.getVoices();
+        let voice = voices.find(v => v.name === voiceName);
+    
+        if (!voice) {
+          voice = voices[0];
+          console.warn(`Voice "${voiceName}" not found. Using default voice.`);
+        }
+    
+        utterance.voice = voice;
+        utterance.pitch = pitch;
+        utterance.rate = rate;
+        utterance.volume = 1.0;
+    
+        utterance.onend = () => {
+          if (isSpeaking) setTimeout(callback, 500);
+        };
+    
+        utterance.onerror = (event) => {
+          console.error('Speech synthesis error:', event);
+          if (isSpeaking) setTimeout(callback, 500);
+        };
+    
+        try {
+          speechSynthesis.speak(utterance);
+        } catch (e) {
+          console.error('Speech synthesis failed:', e);
+          if (isSpeaking) setTimeout(callback, 500);
+        }
+      }
+    
+      if (speechSynthesis.getVoices().length === 0) {
+        let voicesLoaded = false;
+        speechSynthesis.onvoiceschanged = () => {
+          voicesLoaded = true;
+          speak();
+        };
+        setTimeout(() => {
+          if (!voicesLoaded) {
+            console.warn('Voices not loaded, proceeding without speech synthesis.');
+            if (isSpeaking) setTimeout(callback, 500);
+          }
+        }, 1000);
+      } else {
+        speak();
+      }
+    }
+    
+    function playGaryMeow(text, callback) {
+      if (!isSpeaking) { callback(); return; }
+      const garyMeow = document.getElementById('garyMeow');
+      const meowCount = Math.max(1, Math.min(text.split(' ').length, 3));
+      let meowsPlayed = 0;
+    
+      function playNextMeow() {
+        if (meowsPlayed < meowCount) {
+          garyMeow.currentTime = 0;
+          garyMeow.play().then(() => {
+            meowsPlayed++;
+          }).catch(error => {
+            console.error('Error playing Gary meow:', error);
+            meowsPlayed++;
+            if (meowsPlayed >= meowCount) {
+              setTimeout(callback, 500);
+            } else {
+              setTimeout(playNextMeow, 300);
+            }
+          });
+        } else {
+          setTimeout(callback, 500);
+        }
+      }
+    
+      garyMeow.onended = () => {
+        if (meowsPlayed < meowCount) {
+          setTimeout(playNextMeow, 300);
+        } else {
+          setTimeout(callback, 500);
+        }
+      };
+    
+      playNextMeow();
+    }
+    
+    function showTransition(type) {
+      if (type === 'fewMomentsLater') {
+        const overlay = document.getElementById('transitionOverlay');
+        const audio = document.getElementById('transitionAudio');
+        overlay.style.display = 'flex';
+        audio.currentTime = 0;
+        audio.play();
+        setTimeout(() => {
+          overlay.style.display = 'none';
+        }, 3000); // Duration of the transition
+      } else if (type === 'bubble') {
+        const bubbleOverlay = document.getElementById('bubbleTransition');
+        const bubbleSound = document.getElementById('bubbleSound');
+        bubbleOverlay.style.display = 'block';
+        bubbleSound.currentTime = 0;
+        bubbleSound.play();
+        setTimeout(() => {
+          bubbleOverlay.style.display = 'none';
+        }, 2000); // Duration of the bubble transition
+      }
+    }
+    
+    document.getElementById('stopTopic').addEventListener('click', () => {
+      isSpeaking = false;
+      toggleSubmitButton();
+      speechSynthesis.cancel();
+      document.getElementById('subtitles').textContent = '';
+      document.getElementById('stopTopic').style.display = 'none';
+      document.getElementById('watermark').style.bottom = '30px';
+      document.getElementById('anyaiWatermark').style.bottom = '10px';
+      document.getElementById('garyMeow').pause();
+      document.getElementById('garyMeow').currentTime = 0;
+      if (streamingMode) {
+        streamingTimeout = setTimeout(generateRandomTopic, 1000);
+      }
+      showUI();
+    });
+    
+    let walkingEnabled = false;
+    
+    document.getElementById('walkingCheckbox').addEventListener('change', (event) => {
+      walkingEnabled = event.target.checked;
+      if (!walkingEnabled) {
+        resetCharacterPositions();
+      }
+    });
+    
+    function moveCharacter(character) {
+      if (!character || !character.visible) return;
+    
+      const speed = 0.005;
+      const maxDistance = 1;
+    
+      character.translateZ(speed);
+    
+      const distance = new THREE.Vector3(
+        character.position.x - character.originalPosition.x,
+        0,
+        character.position.z - character.originalPosition.z
+      ).length();
+    
+      if (distance > maxDistance) {
+        character.rotation.y += (Math.random() - 0.5) * Math.PI / 2;
+        
+        const direction = new THREE.Vector3(
+          character.position.x - character.originalPosition.x,
+          0,
+          character.position.z - character.originalPosition.z
+        ).normalize();
+    
+        character.position.set(
+          character.originalPosition.x + direction.x * maxDistance,
+          character.originalPosition.y,
+          character.originalPosition.z + direction.z * maxDistance
+        );
+      }
+    }
+    
+    function resetCharacterPositions() {
+      [spongeBobModel, patrickModel, garyModel, mrKrabsModel, squidwardModel, planktonModel, sandyModel, larryModel].forEach(character => {
+        if (character && character.originalPosition) {
+          character.position.copy(character.originalPosition);
+          character.rotation.y = character.originalRotation;
+        }
+      });
+      characters.forEach(char => {
+        if (char.model && char.model.originalPosition) {
+          char.model.position.copy(char.model.originalPosition);
+          char.model.rotation.y = char.model.originalRotation;
+        }
+      });
+    }
+    
+    function animate(time) {
+      requestAnimationFrame(animate);
+    
+      if (walkingEnabled) {
+        moveCharacter(spongeBobModel);
+        moveCharacter(patrickModel);
+        moveCharacter(garyModel);
+        moveCharacter(mrKrabsModel);
+        moveCharacter(squidwardModel);
+        moveCharacter(planktonModel);
+        moveCharacter(sandyModel);
+        moveCharacter(larryModel);
+        characters.forEach(char => {
+          moveCharacter(char.model);
+        });
+      }
+    
+      TWEEN.update(time);
+      renderer.render(scene, camera);
+    }
+    
+    animate();
+    loadCustomCharacters();
+    
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    
+    fetch('https://api.llmplayground.net/v1/models')
+      .then(response => response.json())
+      .then(data => {
+        const select = document.getElementById('modelSelect');
+        data.data.forEach(model => {
+          const option = document.createElement('option');
+          option.value = model.id;
+          option.textContent = model.id;
+          select.appendChild(option);
+        });
+        
+        const defaultModel = 'llama-2-7b-chat-int8';
+        if (select.querySelector(`option[value="${defaultModel}"]`)) {
+          select.value = defaultModel;
+        } else {
+          const option = document.createElement('option');
+          option.value = defaultModel;
+          option.textContent = defaultModel;
+          select.appendChild(option);
+          select.value = defaultModel;
+        }
+      })
+      .catch(error => console.error('Error fetching AI models:', error));
+    
+    const backgroundMusic = document.getElementById('backgroundMusic');
+    backgroundMusic.volume = 0.1;
+    
+    document.addEventListener('DOMContentLoaded', async (event) => {
+      backgroundMusic.play().catch(e => console.log("Autoplay prevented:", e));
+      
+      const audioFiles = [
+        '/SpongeBob SquarePants - Tomfoolery.mp3',
+        '/Spongebob SquarePants - Ending.mp3',
+        '/SpongeBob SquarePants - Seaweed.mp3',
+        '/SpongeBob SquarePants - Twelfth Street Rag.mp3',
+        '/SpongeBob SquarePants - Gator.mp3',
+        '/SpongeBob SquarePants - Molakai Nuia .mp3',
+        '/SpongeBob SquarePants - The Rakehornpipe.mp3',
+        '/SpongeBob SquarePants -  What Shall We Do With the Drunken Sailor.mp3',
+        '/SpongeBob SquarePants - Youre Nice.mp3',
+        '/spongebob-bubble-transition-sound-effect-made-with-Voicemod.mp3',
+        '/gary-meow-v2-made-with-Voicemod.mp3',
+        '/a-few-moments-later-hd.mp3'
+      ];
+
+      try {
+        await Promise.all(audioFiles.map(url => preloadAudio(url)));
+      } catch (error) {
+        console.error('Error preloading audio:', error);
+      }
+
+      const savedMusic = localStorage.getItem('selectedMusic');
+      if (savedMusic) {
+        const musicSelect = document.getElementById('musicSelect');
+        musicSelect.value = savedMusic;
+        backgroundMusic.src = savedMusic;
+        backgroundMusic.load();
+      }
+
+      const savedVolume = localStorage.getItem('musicVolume');
+      if (savedVolume !== null) {
+        backgroundMusic.volume = parseFloat(savedVolume);
+        document.getElementById('musicVolumeSlider').value = savedVolume;
+        document.getElementById('musicVolumeValue').textContent = savedVolume;
+      }
+
+      const musicVolumeSlider = document.getElementById('musicVolumeSlider');
+      const musicVolumeValue = document.getElementById('musicVolumeValue');
+
+      musicVolumeSlider.addEventListener('input', () => {
+        const volume = parseFloat(musicVolumeSlider.value);
+        backgroundMusic.volume = volume;
+        musicVolumeValue.textContent = volume.toFixed(1);
+        localStorage.setItem('musicVolume', volume);
+      });
+    });
+
+    document.body.addEventListener('click', () => {
+      if (backgroundMusic.paused) {
+        backgroundMusic.play().catch(e => console.log("Playback failed:", e));
+      }
+    }, { once: true });
+    
+    speechSynthesis.onvoiceschanged = () => {
+      console.log("Voices loaded:", speechSynthesis.getVoices());
+    };
+    
+    speechSynthesis.getVoices();
+    
+    const garyMeow = document.getElementById('garyMeow');
+    garyMeow.load();
+    
+    const temperatureSlider = document.getElementById('temperatureSlider');
+    const temperatureValue = document.getElementById('temperatureValue');
+    
+    temperatureSlider.addEventListener('input', () => {
+      temperatureValue.textContent = temperatureSlider.value;
+    });
+    
+    const maxTokensSlider = document.getElementById('maxTokensSlider');
+    const maxTokensValue = document.getElementById('maxTokensValue');
+    
+    maxTokensSlider.addEventListener('input', () => {
+      maxTokensValue.textContent = maxTokensSlider.value;
+    });
+    
+    const uiCheckbox = document.getElementById('uiCheckbox');
+    const uiElements = ['ui', 'topicDisplay', 'walkingToggle', 'fullscreenToggle'];
+    
+    function hideUI() {
+      uiElements.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.style.display = 'none';
+        }
+      });
+    }
+    
+    function showUI() {
+      uiElements.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+          if (id === 'fullscreenToggle') {
+            element.style.display = 'flex';
+          } else {
+            element.style.display = 'block';
+          }
+        }
+      });
+    }
+    
+    uiCheckbox.addEventListener('change', (event) => {
+      if (isSpeaking) {
+        if (event.target.checked) {
+          hideUI();
+        } else {
+          showUI();
+        }
+      }
+    });
+    
+    const settingsPopup = document.getElementById('settingsPopup');
+    const settingsOverlay = document.getElementById('settingsOverlay');
+    const openSettingsBtn = document.getElementById('openSettings');
+    const closeSettingsBtn = document.getElementById('closeSettings');
+    const languageInput = document.getElementById('languageInput');
+    
+    openSettingsBtn.addEventListener('click', () => {
+      settingsPopup.style.display = 'block';
+      settingsOverlay.style.display = 'block';
+    });
+    
+    closeSettingsBtn.addEventListener('click', () => {
+      settingsPopup.style.display = 'none';
+      settingsOverlay.style.display = 'none';
+    });
+    
+    document.getElementById('watermark').addEventListener('click', () => {
+      window.open('https://discord.gg/sZCGsSGWBa', '_blank');
+    });
+    
+    const rawResponseToggle = document.getElementById('rawResponseToggle');
+    const rawResponsePopup = document.getElementById('rawResponsePopup');
+    const rawResponseContent = document.getElementById('rawResponseContent');
+    const closeRawResponseBtn = document.getElementById('closeRawResponse');
+    const rawResponseOverlay = document.getElementById('rawResponseOverlay');
+    
+    rawResponseToggle.addEventListener('click', () => {
+      if (rawAIResponse) {
+        rawResponseContent.textContent = `Your Input:\n${userPrompt}\n\nAI Response:\n${rawAIResponse}`;
+      } else {
+        rawResponseContent.textContent = 'No AI response available.';
+      }
+      
+      viewResponseBtn.classList.add('active');
+      inputResponseBtn.classList.remove('active');
+      viewResponseContent.style.display = 'block';
+      inputResponseContent.style.display = 'none';
+      
+      rawResponseOverlay.style.display = 'block';
+      rawResponsePopup.style.display = 'block';
+    });
+
+    const viewResponseBtn = document.getElementById('viewResponse');
+    const inputResponseBtn = document.getElementById('inputResponse');
+    const viewResponseContent = document.getElementById('viewResponseContent');
+    const inputResponseContent = document.getElementById('inputResponseContent');
+    const manualResponseInput = document.getElementById('manualResponseInput');
+    const submitManualResponse = document.getElementById('submitManualResponse');
+
+    viewResponseBtn.addEventListener('click', () => {
+      viewResponseBtn.classList.add('active');
+      inputResponseBtn.classList.remove('active');
+      viewResponseContent.style.display = 'block';
+      inputResponseContent.style.display = 'none';
+    });
+
+    inputResponseBtn.addEventListener('click', () => {
+      inputResponseBtn.classList.add('active');
+      viewResponseBtn.classList.remove('active');
+      viewResponseContent.style.display = 'none';
+      inputResponseContent.style.display = 'block';
+    });
+
+    submitManualResponse.addEventListener('click', () => {
+      const manualInput = manualResponseInput.value.trim();
+      if (manualInput) {
+        rawAIResponse = manualInput;
+        displayConversation(manualInput);
+        rawResponsePopup.style.display = 'none';
+        rawResponseOverlay.style.display = 'none';
+      } else {
+        alert('Please enter a response to process');
+      }
+    });
+    
+    closeRawResponseBtn.addEventListener('click', () => {
+      rawResponsePopup.style.display = 'none';
+      rawResponseOverlay.style.display = 'none';
+    });
+    
+    const fullscreenToggle = document.getElementById('fullscreenToggle');
+    
+    fullscreenToggle.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        if (document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen();
+        } else if (document.documentElement.webkitRequestFullscreen) { // Safari
+          document.documentElement.webkitRequestFullscreen();
+        } else if (document.documentElement.msRequestFullscreen) { // IE/Edge
+          document.documentElement.msExitFullscreen();
+        }
+        fullscreenToggle.innerHTML = '<span class="material-symbols-outlined">fullscreen_exit</span>';
+        document.documentElement.classList.add('fullscreen');
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) { // Safari
+          document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) { // IE/Edge
+          document.documentElement.msExitFullscreen();
+        }
+        fullscreenToggle.innerHTML = '<span class="material-symbols-outlined">fullscreen</span>';
+        document.documentElement.classList.remove('fullscreen');
+      }
+    });
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      const pageButtons = document.querySelectorAll('.page-button');
+      const settingsPages = document.querySelectorAll('.settings-page');
+
+      pageButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const pageNumber = button.dataset.page;
+          
+          pageButtons.forEach(btn => btn.classList.remove('active'));
+          button.classList.add('active');
+          
+          settingsPages.forEach(page => {
+            page.classList.remove('active');
+            if (page.id === `settingsPage${pageNumber}`) {
+              page.classList.add('active');
+            }
+          });
+        });
+      });
+
+      const familyFriendlyCheckbox = document.getElementById('familyFriendlyCheckbox');
+      const savedMode = localStorage.getItem('familyFriendlyMode');
+      familyFriendlyCheckbox.checked = savedMode === null ? true : savedMode === 'true';
+
+      familyFriendlyCheckbox.addEventListener('change', () => {
+        localStorage.setItem('familyFriendlyMode', familyFriendlyCheckbox.checked);
+      });
+
+      const musicSelect = document.getElementById('musicSelect');
+      musicSelect.addEventListener('change', (event) => {
+        const currentVolume = backgroundMusic.volume;
+        backgroundMusic.src = event.target.value;
+        backgroundMusic.load();
+        backgroundMusic.volume = currentVolume;
+        backgroundMusic.play().catch(e => console.log("Music change failed:", e));
+        
+        localStorage.setItem('selectedMusic', event.target.value);
+      });
+    });
+    
+    // Preload function for audio
+    function preloadAudio(url) {
+      return new Promise((resolve, reject) => {
+        const audio = new Audio(url);
+        audio.addEventListener('canplaythrough', () => {
+          updateLoadingProgress();
+          resolve();
+        });
+        audio.addEventListener('error', reject);
+        audio.src = url;
+      });
+    }
+    </script>
+    </body>
+    </html>
